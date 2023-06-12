@@ -45,7 +45,7 @@ public:
 			if (gameObject->Collides(*shurikenObject->gameObject(), intersection))
 			{
 				_shurikensContainer.erase(std::remove(_shurikensContainer.begin(), _shurikensContainer.end(), shurikenObject), _shurikensContainer.end());
-				shurikenObject->gameObject()->Dispose();
+				//shurikenObject->gameObject()->Dispose();
 				shurikenObject = nullptr;
 				delete shurikenObject;
 			}

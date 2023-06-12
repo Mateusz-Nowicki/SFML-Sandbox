@@ -53,12 +53,13 @@ Vector2f CalculateDirection(GameObject* GameObject1, GameObject* GameObject2, do
 
 Clock Mainclock;
 Time deltaTime;
-GameObject** gameObject;
+
 GameObject* MouseCursor;
+vector<GameObject*> _gameObjectsContainer;
 //GameObject* tileMap;
 GameObject*** tileMapArray;
 
-int ArraySize = 10;
+int InitialEnemiesCount = 10;
 
 int TileMapWidth = 40;
 int TileMapHeight = 30;
@@ -262,11 +263,14 @@ void Initialization()
     windowQuarter = Vector2f(WindowWidth, WindowHeight) * 0.25f;
     // load a 32x32 rectangle that starts at (10, 10)
     
-    gameObject = new GameObject*[ArraySize];
+    //gameObject = new GameObject*[ArraySize];
 
-    for (int i = 0; i < ArraySize; i++)
+
+
+    for (int i = 0; i < InitialEnemiesCount; i++)
     {
-        gameObject[i] = new GameObject("Assets\\player.png", 6, 10, 48, 48, new int [10]{6,6,6,6,6,6,4,4,4,3});
+        GameObject* gameObject = new GameObject("Assets\\player.png", 6, 10, 48, 48, new int [10] {6, 6, 6, 6, 6, 6, 4, 4, 4, 3});
+        _gameObjectsContainer.push_back(gameObject);
     }
 
     //tileMap = new GameObject("Assets\\tile-map-1.png", 6, 8, 16, 16, new int[0] {}, true);
@@ -289,15 +293,17 @@ void Initialization()
 
     int minX = 0, maxX = 640;
     int minY = 0, maxY = 480;
-    for (int i = 1; i < ArraySize; i++)
+
+    for (GameObject* gameObject : _gameObjectsContainer)
     {
-        gameObject[i]->move(Vector2f(((minX) + rand() % (maxX - minX + 1 - 48)), ((minY)+rand() % (maxY - minY + 1 - 48))));
-        gameObject[i]->SetAnimation(rand() % 10);
+        gameObject->move(Vector2f(((minX)+rand() % (maxX - minX + 1 - 48)), ((minY)+rand() % (maxY - minY + 1 - 48))));
+        gameObject->SetAnimation(rand() % 10);
     }
     
-    shurikenController = new ShurikenController();
+    
+    GameObject* playerObject = new GameObject("Assets\\player.png", 6, 10, 48, 48, new int [10] {6, 6, 6, 6, 6, 6, 4, 4, 4, 3});
     playerController = new PlayerController(
-        gameObject[0],
+        playerObject,
         map<PlayerActions, Keyboard::Key>
         {
             { PlayerActions::Left, Keyboard::A},
@@ -307,9 +313,7 @@ void Initialization()
         },
         250.f
     );
-
-
-
+    shurikenController = new ShurikenController();
 
     mainView = View(playerController->gameObject()->GetCenteredPosition(), Vector2f(WindowWidth / 2, WindowHeight / 2));
 }
@@ -320,31 +324,31 @@ void PhysicsLoop()
 {
     IntRect intersection;
     double Friction = 0.5;
-    for (int i = 1; i < ArraySize; i++)
+
+
+    for (GameObject* gameObject : _gameObjectsContainer)
     {
-        shurikenController->CheckCollisions(gameObject[i], intersection);
-        if (playerController->Collides(*gameObject[i], intersection))
+        shurikenController->CheckCollisions(gameObject, intersection);
+        if (playerController->Collides(*gameObject, intersection))
         {
-           Vector2f pushDirection = CalculateDirection(gameObject[i], playerController->gameObject(), Friction, intersection);
-           gameObject[i]->move(pushDirection);
-           
+            Vector2f pushDirection = CalculateDirection(gameObject, playerController->gameObject(), Friction, intersection);
+            gameObject->move(pushDirection);
         }
-       
     }
 
 
 
-    for (int i = 1; i < ArraySize; i++)
+    for (int i = 1; i < _gameObjectsContainer.size(); i++)
     {
-        for (int j = 1 + i; j < ArraySize; j++)
+        for (int j = 1 + i; j < _gameObjectsContainer.size(); j++)
         {
-            if (gameObject[j]->Collides(*gameObject[i], intersection))
+            if (_gameObjectsContainer[j]->Collides(*_gameObjectsContainer[i], intersection))
             {
 
-                Vector2f pushDirection = CalculateDirection(gameObject[i], gameObject[j], Friction, intersection);
+                Vector2f pushDirection = CalculateDirection(_gameObjectsContainer[i], _gameObjectsContainer[j], Friction, intersection);
                
-                gameObject[i]->move(pushDirection * 0.5f);
-                gameObject[j]->move(pushDirection * -0.5f);
+                _gameObjectsContainer[i]->move(pushDirection * 0.5f);
+                _gameObjectsContainer[j]->move(pushDirection * -0.5f);
             }
         }  
     }
@@ -400,7 +404,7 @@ void Update(float deltaTime)
 }
 void LogicLoop(float deltaTime) 
 {
-
+    playerController->gameObject()->Update(deltaTime);
     
    // tileMap->Update(deltaTime);
     for (int y = 0; y < TileMapHeight; y++)
@@ -411,9 +415,9 @@ void LogicLoop(float deltaTime)
         }
     }
 
-    for (int i = 0; i < ArraySize; i++)
+    for (GameObject* gameObject : _gameObjectsContainer)
     {
-        gameObject[i]->Update(deltaTime);
+        gameObject->Update(deltaTime);
     }
 
     
@@ -450,6 +454,8 @@ void RenderingLoop(RenderWindow& renderWindow, float deltaTime)
     renderWindow.clear(Color::Black);
     
     //renderWindow.draw(*tileMap);
+    
+
    for (int y = 0; y < TileMapHeight; y++)
    {
        for (int x = 0; x < TileMapWidth; x++)
@@ -461,11 +467,15 @@ void RenderingLoop(RenderWindow& renderWindow, float deltaTime)
            
        }
    }
-    for (int i = 0; i < ArraySize; i++)
+
+   for (GameObject* gameObject : _gameObjectsContainer)
     {
-        renderWindow.draw(*gameObject[i]);
+        renderWindow.draw(*gameObject);
     }
+
     renderWindow.draw(*MouseCursor);
+    renderWindow.draw(*playerController->gameObject());
+
 #ifdef DEBUG_DRAW   
     sf::Vertex line[] =
     {

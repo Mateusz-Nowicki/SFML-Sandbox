@@ -145,6 +145,7 @@
     <Image Include="Assets\player.png" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="EnemyClass.h" />
     <ClInclude Include="GameMode.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="PlayerActions.h" />

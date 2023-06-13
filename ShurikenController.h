@@ -21,7 +21,7 @@ public:
 	void SpawnShuriken(Vector2f spawnPos, Vector2f destination)
 	{
 		ShurikenObject* shurikenObject = new ShurikenObject(spawnPos, destination);
-		shurikenObject->gameObject()->setPosition(spawnPos);
+		shurikenObject->GetGameObject()->setPosition(spawnPos);
 		cout << "DebugShurikenPos: Spawned at: " << spawnPos.x << "  " << spawnPos.y << endl;
 		_shurikensContainer.push_back(shurikenObject);
 		cout << _shurikensContainer.size() << endl;
@@ -32,17 +32,17 @@ public:
 	{
 		for (ShurikenObject* shurikenObject : _shurikensContainer)
 		{
-			renderTarget.draw(*shurikenObject->gameObject());
+			renderTarget.draw(*shurikenObject->GetGameObject());
 		}
 	}
 
 
 
-	void CheckCollisions(GameObject* gameObject, IntRect& intersection)
+	void CheckCollisions(GameObject* GetGameObject, IntRect& intersection)
 	{
 		for (ShurikenObject* shurikenObject : _shurikensContainer)
 		{
-			if (gameObject->Collides(*shurikenObject->gameObject(), intersection))
+			if (GetGameObject->Collides(*shurikenObject->GetGameObject(), intersection))
 			{
 				_shurikensContainer.erase(std::remove(_shurikensContainer.begin(), _shurikensContainer.end(), shurikenObject), _shurikensContainer.end());
 				//shurikenObject->gameObject()->Dispose();

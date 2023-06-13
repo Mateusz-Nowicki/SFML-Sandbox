@@ -8,15 +8,19 @@ private:
 	float _lifeSpan = 5.0;
 	float _baseSpeed = 100;
 	Vector2f _directionVector;
-	GameObject* _gameObject = NULL;
+	GameObject* _gameObject = nullptr;
 
 	Vector2f normalize(const Vector2f& source)
 	{
 		float length = sqrt((source.x * source.x) + (source.y * source.y));
 		if (length != 0)
+		{
 			return Vector2f(source.x / length, source.y / length);
+		}
 		else
+		{
 			return source;
+		}
 	}
 
 public:
@@ -56,7 +60,7 @@ public:
 		_gameObject->move((_directionVector * _baseSpeed * deltaTime));
 	}
 
-	GameObject* gameObject()
+	GameObject* GetGameObject()
 	{
 		return _gameObject;
 	}

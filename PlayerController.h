@@ -36,7 +36,7 @@ public:
         return _gameObject->Collides(other, intersection);
     }
 
-    GameObject* gameObject()
+    GameObject* GetGameObject()
     {
         return _gameObject;
     }

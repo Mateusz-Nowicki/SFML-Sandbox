@@ -31,16 +31,12 @@
 #include "GameMode.h"
 #include <vector>
 #include "ShurikenController.h"
+#include "EnemyClass.h"
 using namespace sf;
 using namespace std;
 
 
-//void SpawnShuriken(vector<GameObject*>& ShurikensContainer, Vector2f StartingPos)
-//{
-//    GameObject* Shuriken = new GameObject("Assets\\Shuriken.png", 1, 1, 16, 16, new int [1] {1});
-//    Shuriken->setPosition(StartingPos);
-//    ShurikensContainer.push_back(Shuriken);
-//}
+
 
 void PhysicsLoop();
 void Update(float);
@@ -55,7 +51,7 @@ Clock Mainclock;
 Time deltaTime;
 
 GameObject* MouseCursor;
-vector<GameObject*> _gameObjectsContainer;
+vector<EnemyClass*> _EnemyObjectsContainer;
 //GameObject* tileMap;
 GameObject*** tileMapArray;
 
@@ -157,7 +153,7 @@ void NonEditorModeInput(Event event)
     {
         if (event.mouseButton.button == sf::Mouse::Left)
         {
-           shurikenController->SpawnShuriken(playerController->gameObject()->GetCenteredPosition(), MouseCursor->getPosition());
+           shurikenController->SpawnShuriken(playerController->GetGameObject()->GetCenteredPosition(), MouseCursor->getPosition());
         }
     }
 }
@@ -262,16 +258,10 @@ void Initialization()
     
     windowQuarter = Vector2f(WindowWidth, WindowHeight) * 0.25f;
     // load a 32x32 rectangle that starts at (10, 10)
-    
-    //gameObject = new GameObject*[ArraySize];
+    int minX = 0, maxX = 640;
+    int minY = 0, maxY = 480;
 
 
-
-    for (int i = 0; i < InitialEnemiesCount; i++)
-    {
-        GameObject* gameObject = new GameObject("Assets\\player.png", 6, 10, 48, 48, new int [10] {6, 6, 6, 6, 6, 6, 4, 4, 4, 3});
-        _gameObjectsContainer.push_back(gameObject);
-    }
 
     //tileMap = new GameObject("Assets\\tile-map-1.png", 6, 8, 16, 16, new int[0] {}, true);
 
@@ -291,14 +281,9 @@ void Initialization()
     MouseCursor->SetGlobalScale(Factors);
   
 
-    int minX = 0, maxX = 640;
-    int minY = 0, maxY = 480;
 
-    for (GameObject* gameObject : _gameObjectsContainer)
-    {
-        gameObject->move(Vector2f(((minX)+rand() % (maxX - minX + 1 - 48)), ((minY)+rand() % (maxY - minY + 1 - 48))));
-        gameObject->SetAnimation(rand() % 10);
-    }
+
+
     
     
     GameObject* playerObject = new GameObject("Assets\\player.png", 6, 10, 48, 48, new int [10] {6, 6, 6, 6, 6, 6, 4, 4, 4, 3});
@@ -313,9 +298,21 @@ void Initialization()
         },
         250.f
     );
+
+    for (int i = 0; i < InitialEnemiesCount; i++)
+    {
+        EnemyClass* enemyObject = new EnemyClass(Vector2f(((minX)+rand() % (maxX - minX + 1 - 48)), ((minY)+rand() % (maxY - minY + 1 - 48))), playerController->GetGameObject()->getPosition());
+        _EnemyObjectsContainer.push_back(enemyObject);
+    }
+
+    for (EnemyClass* enemyObject : _EnemyObjectsContainer)
+    {
+        enemyObject->GetGameObject()->move(Vector2f(((minX)+rand() % (maxX - minX + 1 - 48)), ((minY)+rand() % (maxY - minY + 1 - 48))));
+        enemyObject->GetGameObject()->SetAnimation(rand() % 10);
+    }
     shurikenController = new ShurikenController();
 
-    mainView = View(playerController->gameObject()->GetCenteredPosition(), Vector2f(WindowWidth / 2, WindowHeight / 2));
+    mainView = View(playerController->GetGameObject()->GetCenteredPosition(), Vector2f(WindowWidth / 2, WindowHeight / 2));
 }
 
 
@@ -326,29 +323,29 @@ void PhysicsLoop()
     double Friction = 0.5;
 
 
-    for (GameObject* gameObject : _gameObjectsContainer)
+    for (EnemyClass* enemyObject : _EnemyObjectsContainer)
     {
-        shurikenController->CheckCollisions(gameObject, intersection);
-        if (playerController->Collides(*gameObject, intersection))
+        shurikenController->CheckCollisions(enemyObject->GetGameObject(), intersection);
+        if (playerController->Collides(*enemyObject->GetGameObject(), intersection))
         {
-            Vector2f pushDirection = CalculateDirection(gameObject, playerController->gameObject(), Friction, intersection);
-            gameObject->move(pushDirection);
+            Vector2f pushDirection = CalculateDirection(enemyObject->GetGameObject(), playerController->GetGameObject(), Friction, intersection);
+            enemyObject->GetGameObject()->move(pushDirection);
         }
     }
 
 
 
-    for (int i = 1; i < _gameObjectsContainer.size(); i++)
+    for (int i = 1; i < _EnemyObjectsContainer.size(); i++)
     {
-        for (int j = 1 + i; j < _gameObjectsContainer.size(); j++)
+        for (int j = 1 + i; j < _EnemyObjectsContainer.size(); j++)
         {
-            if (_gameObjectsContainer[j]->Collides(*_gameObjectsContainer[i], intersection))
+            if (_EnemyObjectsContainer[j]->GetGameObject()->Collides(*_EnemyObjectsContainer[i]->GetGameObject(), intersection))
             {
 
-                Vector2f pushDirection = CalculateDirection(_gameObjectsContainer[i], _gameObjectsContainer[j], Friction, intersection);
+                Vector2f pushDirection = CalculateDirection(_EnemyObjectsContainer[i]->GetGameObject(), _EnemyObjectsContainer[j]->GetGameObject(), Friction, intersection);
                
-                _gameObjectsContainer[i]->move(pushDirection * 0.5f);
-                _gameObjectsContainer[j]->move(pushDirection * -0.5f);
+                _EnemyObjectsContainer[i]->GetGameObject()->move(pushDirection * 0.5f);
+                _EnemyObjectsContainer[j]->GetGameObject()->move(pushDirection * -0.5f);
             }
         }  
     }
@@ -404,7 +401,7 @@ void Update(float deltaTime)
 }
 void LogicLoop(float deltaTime) 
 {
-    playerController->gameObject()->Update(deltaTime);
+    playerController->GetGameObject()->Update(deltaTime);
     
    // tileMap->Update(deltaTime);
     for (int y = 0; y < TileMapHeight; y++)
@@ -415,9 +412,10 @@ void LogicLoop(float deltaTime)
         }
     }
 
-    for (GameObject* gameObject : _gameObjectsContainer)
+    for (EnemyClass* enemyObject : _EnemyObjectsContainer)
     {
-        gameObject->Update(deltaTime);
+        enemyObject->UpdateMovement(deltaTime, playerController->GetGameObject());
+        enemyObject->GetGameObject()->Update(deltaTime);
     }
 
     
@@ -425,7 +423,7 @@ void LogicLoop(float deltaTime)
 
 void UpdateMainView(RenderWindow& mainWindow)
 {
-    Vector2f newViewCenter = playerController->gameObject()->GetCenteredPosition();
+    Vector2f newViewCenter = playerController->GetGameObject()->GetCenteredPosition();
 
     if (newViewCenter.x < WindowWidth / 4)
     {
@@ -468,18 +466,18 @@ void RenderingLoop(RenderWindow& renderWindow, float deltaTime)
        }
    }
 
-   for (GameObject* gameObject : _gameObjectsContainer)
+   for (EnemyClass* enemyObject : _EnemyObjectsContainer)
     {
-        renderWindow.draw(*gameObject);
+        renderWindow.draw(*enemyObject->GetGameObject());
     }
 
     renderWindow.draw(*MouseCursor);
-    renderWindow.draw(*playerController->gameObject());
+    renderWindow.draw(*playerController->GetGameObject());
 
 #ifdef DEBUG_DRAW   
     sf::Vertex line[] =
     {
-        Vertex(playerController->gameObject()->GetCenteredPosition()),
+        Vertex(playerController->GetGameObject()->GetCenteredPosition()),
         Vertex(MouseCursor->GetCenteredPosition()),
     };
 
@@ -495,6 +493,6 @@ void RenderingLoop(RenderWindow& renderWindow, float deltaTime)
 
 
 
-// func load sprite atlas ma nie byæ global, co tam sie dzieje ma wypierdalac do œrodka jako priv metoda klasy gameobjkect, 
-// construktor ma zostac zmieniony z przyjmowania spritearray, ma przyjmowaæ stepy, sizy oraz string path to spriteatlas, sprite ma wypierdalaæ z globala, i ma sobie za³adowaæ wszystko 
+// func load sprite atlas ma nie byæ global, co tam sie dzieje ma wyjsc do œrodka jako priv metoda klasy gameobjkect, 
+// construktor ma zostac zmieniony z przyjmowania spritearray, ma przyjmowaæ stepy, sizy oraz string path to spriteatlas, sprite ma wyjœæ z globala, i ma sobie za³adowaæ wszystko 
 // drugi objekt i jeden ma sie ruszac a drugi ma stac

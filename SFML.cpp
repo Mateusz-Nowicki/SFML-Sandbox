@@ -45,6 +45,13 @@ void RenderingLoop(RenderWindow&, float);
 void Initialization();
 Vector2f CalculateDirection(GameObject* GameObject1, GameObject* GameObject2, double Friction, IntRect intersection);
 
+Vector2f GetRandomWindowPos()
+{
+    int minX = 0, maxX = 640;
+    int minY = 0, maxY = 480;
+
+    return Vector2f(((minX)+rand() % (maxX - minX + 1 - 48)), ((minY)+rand() % (maxY - minY + 1 - 48)));
+}
 
 
 Clock Mainclock;
@@ -55,7 +62,7 @@ vector<EnemyClass*> _EnemyObjectsContainer;
 //GameObject* tileMap;
 GameObject*** tileMapArray;
 
-int InitialEnemiesCount = 10;
+int InitialEnemiesCount = 15;
 
 int TileMapWidth = 40;
 int TileMapHeight = 30;
@@ -217,21 +224,20 @@ int main()
             {
                 switch (CurrentGameMode)
                 {
-                case GameMode::Editor:
-                {
-                    EditorModeInput(event);
-                    break;
-                }
-                case GameMode::NonEditor:
-                {
-                    NonEditorModeInput(event);
-                    break;
-                }
-                default:
-                {
-                    break;
-                }
-
+                    case GameMode::Editor:
+                    {
+                        EditorModeInput(event);
+                        break;
+                    }
+                    case GameMode::NonEditor:
+                    {
+                        NonEditorModeInput(event);
+                        break;
+                    }
+                    default:
+                    {
+                        break;
+                    }
                 }
             }
         }
@@ -255,15 +261,8 @@ int main()
 
 void Initialization()
 {
-    
     windowQuarter = Vector2f(WindowWidth, WindowHeight) * 0.25f;
     // load a 32x32 rectangle that starts at (10, 10)
-    int minX = 0, maxX = 640;
-    int minY = 0, maxY = 480;
-
-
-
-    //tileMap = new GameObject("Assets\\tile-map-1.png", 6, 8, 16, 16, new int[0] {}, true);
 
     tileMapArray = new GameObject**[TileMapWidth];
     for (int x = 0; x < TileMapWidth; x++)
@@ -275,17 +274,12 @@ void Initialization()
             tileMapArray[x][y] = new GameObject("Assets\\tile-map-1.png", 6, 8, 16, 16, new int[0] {}, true);
         }
     }
+
     MouseCursor = new GameObject("Assets\\cursor-nc.png", 1, 1, 512, 512, new int[1] {1});
 
     Vector2f Factors = Vector2f(0.0650,0.0650);
     MouseCursor->SetGlobalScale(Factors);
   
-
-
-
-
-    
-    
     GameObject* playerObject = new GameObject("Assets\\player.png", 6, 10, 48, 48, new int [10] {6, 6, 6, 6, 6, 6, 4, 4, 4, 3});
     playerController = new PlayerController(
         playerObject,
@@ -301,15 +295,16 @@ void Initialization()
 
     for (int i = 0; i < InitialEnemiesCount; i++)
     {
-        EnemyClass* enemyObject = new EnemyClass(Vector2f(((minX)+rand() % (maxX - minX + 1 - 48)), ((minY)+rand() % (maxY - minY + 1 - 48))), playerController->GetGameObject()->getPosition());
+        EnemyClass* enemyObject = new EnemyClass(GetRandomWindowPos(), playerController->GetGameObject()->getPosition());
         _EnemyObjectsContainer.push_back(enemyObject);
     }
 
     for (EnemyClass* enemyObject : _EnemyObjectsContainer)
     {
-        enemyObject->GetGameObject()->move(Vector2f(((minX)+rand() % (maxX - minX + 1 - 48)), ((minY)+rand() % (maxY - minY + 1 - 48))));
+        enemyObject->GetGameObject()->move(GetRandomWindowPos());
         enemyObject->GetGameObject()->SetAnimation(rand() % 10);
     }
+
     shurikenController = new ShurikenController();
 
     mainView = View(playerController->GetGameObject()->GetCenteredPosition(), Vector2f(WindowWidth / 2, WindowHeight / 2));
@@ -414,7 +409,7 @@ void LogicLoop(float deltaTime)
 
     for (EnemyClass* enemyObject : _EnemyObjectsContainer)
     {
-        enemyObject->UpdateMovement(deltaTime, playerController->GetGameObject());
+        enemyObject->UpdateMovement(deltaTime, playerController->GetGameObject()->getPosition());
         enemyObject->GetGameObject()->Update(deltaTime);
     }
 

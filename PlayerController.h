@@ -31,6 +31,12 @@ public:
         _baseSpeed = baseSpeed;
 	}
 
+   //void Dispose()
+   //{
+   //    _gameObject = nullptr;
+   //    delete _gameObject;
+   //}
+
     bool Collides(GameObject& other, IntRect& intersection)
     {
         return _gameObject->Collides(other, intersection);

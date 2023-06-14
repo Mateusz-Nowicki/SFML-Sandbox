@@ -40,9 +40,9 @@ public:
 		return directionVector;
 	}
 
-	void UpdateMovement(float deltaTime, GameObject* GetGameObject)
+	void UpdateMovement(float deltaTime, Vector2f objectPos)
 	{
-		_directionVector = GetCalculatedDirection(_gameObject->getPosition(), GetGameObject->getPosition());
+		_directionVector = GetCalculatedDirection(_gameObject->getPosition(), objectPos);
 		Vector2f translation = (_directionVector * _baseSpeed * deltaTime);
 		Vector2f destination = _gameObject->getPosition() + translation;
 		_gameObject->move((_directionVector * _baseSpeed * deltaTime));

@@ -29,7 +29,7 @@ private:
     IntRect* _boundingBox;
 
 public:
-    /* int SizeX = 6;
+        /* int SizeX = 6;
         int SizeY = 10;
         int StepX = 48;
         int StepY = 48;*/
@@ -62,7 +62,6 @@ public:
         }
 
         LoadSpriteAtlas(_texture, animationLength);
-
         _boundingBox = new IntRect(_sprite.getGlobalBounds());
     }
 
@@ -70,6 +69,7 @@ public:
     {
         return IntRect(*_boundingBox);
     }
+
     void Update(float deltaTime)
     {
         UpdateAnimation(deltaTime);
@@ -89,8 +89,6 @@ public:
     void SetAnimation(int animationIndex)
     {
         if (_currentAnimationIndex == animationIndex) return;
-
-
         _currentAnimationIndex = animationIndex;
         _currentAnimationFrame = 0;
     }
@@ -106,6 +104,14 @@ public:
         this->setScale(Factor);
         this->_boundingBox->height *= Factor.y;
         this->_boundingBox->width *= Factor.x;
+    }
+
+    Vector2f GetRandomWindowPos()
+    {
+        int minX = 0, maxX = 640;
+        int minY = 0, maxY = 480;
+
+        return Vector2f(((minX)+rand() % (maxX - minX + 1 - 48)), ((minY)+rand() % (maxY - minY + 1 - 48)));
     }
 
 private:
@@ -144,7 +150,6 @@ private:
 
     void LoadSpriteAtlas(Texture& texture, int* animationLenght)
     {
-
         _sprite = Sprite();
         _sprite.setTexture(texture);
         _sprite.setTextureRect(IntRect(0, 0, _stepX, _stepY));
@@ -163,27 +168,20 @@ private:
             return;
         }
 
-
-
         _frameTimer += deltaTime;
 
         if (_frameTimer > _frameInterval)
         {
             _currentAnimationFrame++;
             _sprite.setTextureRect(IntRect(_currentAnimationFrame * _stepX, _currentAnimationIndex * _stepY, _stepX, _stepY));
-
             
             _frameTimer -= _frameInterval;
             if (_currentAnimationFrame > _animationLength[_currentAnimationIndex] - 2)
             {
                 _currentAnimationFrame = 0;
             }
-
         }
-
     }
-
-    
 };
 
 

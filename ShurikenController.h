@@ -38,16 +38,17 @@ public:
 
 
 
-	void CheckCollisions(GameObject* GetGameObject, IntRect& intersection)
+	void CheckCollisions(GameObject* GameObject, IntRect& intersection)
 	{
 		for (ShurikenObject* shurikenObject : _shurikensContainer)
 		{
-			if (GetGameObject->Collides(*shurikenObject->GetGameObject(), intersection))
+			if (GameObject->Collides(*shurikenObject->GetGameObject(), intersection))
 			{
 				_shurikensContainer.erase(std::remove(_shurikensContainer.begin(), _shurikensContainer.end(), shurikenObject), _shurikensContainer.end());
+				GameObject->move(GameObject->GetRandomWindowPos());
 				//shurikenObject->gameObject()->Dispose();
-				shurikenObject = nullptr;
-				delete shurikenObject;
+				//shurikenObject = nullptr;
+				//delete shurikenObject;
 			}
 		}
 	}

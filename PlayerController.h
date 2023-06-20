@@ -15,6 +15,7 @@ private:
     float _baseSpeed;
     float _speedX;
     float _speedY;
+    
     map<PlayerActions, Keyboard::Key> _mappedActions;
 
     Vector2f _motionVector;
@@ -23,7 +24,8 @@ private:
 
 
 public:
-	
+    float HealthPoints = 30.0;
+
 	PlayerController(GameObject* gameobject, map<PlayerActions, Keyboard::Key> mappedActions, float baseSpeed)
 	{
         _mappedActions = mappedActions;

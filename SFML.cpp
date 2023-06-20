@@ -31,38 +31,31 @@
 #include "GameMode.h"
 #include <vector>
 #include "ShurikenController.h"
-#include "EnemyClass.h"
+#include "EnemyController.h"
 using namespace sf;
 using namespace std;
 
 
 
 
-void PhysicsLoop();
+void PhysicsLoop(float);
 void Update(float);
 void LogicLoop(float deltaTime);
 void RenderingLoop(RenderWindow&, float);
 void Initialization();
 Vector2f CalculateDirection(GameObject* GameObject1, GameObject* GameObject2, double Friction, IntRect intersection);
 
-Vector2f GetRandomWindowPos()
-{
-    int minX = 0, maxX = 640;
-    int minY = 0, maxY = 480;
 
-    return Vector2f(((minX)+rand() % (maxX - minX + 1 - 48)), ((minY)+rand() % (maxY - minY + 1 - 48)));
-}
 
 
 Clock Mainclock;
 Time deltaTime;
 
 GameObject* MouseCursor;
-vector<EnemyClass*> _EnemyObjectsContainer;
 //GameObject* tileMap;
 GameObject*** tileMapArray;
 
-int InitialEnemiesCount = 15;
+int InitialEnemiesCount = 10;
 
 int TileMapWidth = 40;
 int TileMapHeight = 30;
@@ -72,6 +65,7 @@ bool isProgramFocused = true;
 
 GameMode CurrentGameMode = GameMode::Editor;
 ShurikenController* shurikenController;
+EnemyController* enemyController;
 
 PlayerController* playerController;
 View mainView;
@@ -250,7 +244,7 @@ int main()
 
         MouseCursor->setPosition(mousePosF * 0.5f + mainView.getCenter() - windowQuarter);
 
-        PhysicsLoop();
+        PhysicsLoop(deltaTime.asSeconds());
         Update(deltaTime.asSeconds());
         LogicLoop(deltaTime.asSeconds());
         RenderingLoop(mainWindow, deltaTime.asSeconds());
@@ -293,59 +287,59 @@ void Initialization()
         250.f
     );
 
-    for (int i = 0; i < InitialEnemiesCount; i++)
-    {
-        EnemyClass* enemyObject = new EnemyClass(GetRandomWindowPos(), playerController->GetGameObject()->getPosition());
-        _EnemyObjectsContainer.push_back(enemyObject);
-    }
-
-    for (EnemyClass* enemyObject : _EnemyObjectsContainer)
-    {
-        enemyObject->GetGameObject()->move(GetRandomWindowPos());
-        enemyObject->GetGameObject()->SetAnimation(rand() % 10);
-    }
-
     shurikenController = new ShurikenController();
+    enemyController = new EnemyController(InitialEnemiesCount, playerController->GetGameObject()->GetCenteredPosition());
 
     mainView = View(playerController->GetGameObject()->GetCenteredPosition(), Vector2f(WindowWidth / 2, WindowHeight / 2));
 }
 
 
 
-void PhysicsLoop() 
+void PhysicsLoop(float deltaTime) 
 {
     IntRect intersection;
     double Friction = 0.5;
 
-
-    for (EnemyClass* enemyObject : _EnemyObjectsContainer)
+    for (int i = 1; i < enemyController->GetContainer().size(); i++)
     {
-        shurikenController->CheckCollisions(enemyObject->GetGameObject(), intersection);
+        for (int j = 1 + i; j < enemyController->GetContainer().size(); j++)
+        {
+            if (enemyController->GetContainer()[j]->GetGameObject()->Collides(*enemyController->GetContainer()[i]->GetGameObject(), intersection))
+            {
+                Vector2f pushDirection = CalculateDirection(enemyController->GetContainer()[i]->GetGameObject(), enemyController->GetContainer()[j]->GetGameObject(), Friction, intersection);
+
+                enemyController->GetContainer()[i]->GetGameObject()->move(pushDirection * 0.5f);
+                enemyController->GetContainer()[j]->GetGameObject()->move(pushDirection * -0.5f);
+            }
+        }
+    }
+
+  
+
+
+
+    for (EnemyClass* enemyObject : enemyController->GetContainer())
+    {
+        for (ShurikenObject* shurikenObject : shurikenController->GetContainer())
+        {
+            if (enemyObject->GetGameObject()->Collides(*shurikenObject->GetGameObject(), intersection))
+            {
+                shurikenObject->ToRemove = true;
+                enemyObject->Respawn();
+            }
+
+        }
+
         if (playerController->Collides(*enemyObject->GetGameObject(), intersection))
         {
             Vector2f pushDirection = CalculateDirection(enemyObject->GetGameObject(), playerController->GetGameObject(), Friction, intersection);
             enemyObject->GetGameObject()->move(pushDirection);
+            playerController->HealthPoints -= deltaTime;
         }
     }
 
+    shurikenController->_shurikensContainer.erase(std::remove_if(shurikenController->_shurikensContainer.begin(), shurikenController->_shurikensContainer.end(), [](ShurikenObject* shurikenObject) {return shurikenObject->ToRemove; }), shurikenController->_shurikensContainer.end());
 
-
-    for (int i = 1; i < _EnemyObjectsContainer.size(); i++)
-    {
-        for (int j = 1 + i; j < _EnemyObjectsContainer.size(); j++)
-        {
-            if (_EnemyObjectsContainer[j]->GetGameObject()->Collides(*_EnemyObjectsContainer[i]->GetGameObject(), intersection))
-            {
-
-                Vector2f pushDirection = CalculateDirection(_EnemyObjectsContainer[i]->GetGameObject(), _EnemyObjectsContainer[j]->GetGameObject(), Friction, intersection);
-               
-                _EnemyObjectsContainer[i]->GetGameObject()->move(pushDirection * 0.5f);
-                _EnemyObjectsContainer[j]->GetGameObject()->move(pushDirection * -0.5f);
-            }
-        }  
-    }
-
-    // TODO: It shouldn't work in this order of operations, we change it again in RenderLoop, but change is persistent. IDK WHY?!
 
 
 
@@ -367,6 +361,12 @@ void PhysicsLoop()
         }
     }
    
+
+    if (playerController->HealthPoints <= 0)
+    {
+        cout << "deaded" << endl;
+    }
+
 }  
 
 
@@ -390,13 +390,15 @@ void Update(float deltaTime)
 {
     
     playerController->Update(deltaTime);
+    playerController->GetGameObject()->Update(deltaTime);
     shurikenController->Update(deltaTime);
+    enemyController->Update(deltaTime, playerController->GetGameObject()->GetCenteredPosition());
     //cout << "DebugMouse: Moved from " << MouseCursor->getPosition().x << " " << MouseCursor->getPosition().y << endl;
     
 }
 void LogicLoop(float deltaTime) 
 {
-    playerController->GetGameObject()->Update(deltaTime);
+    
     
    // tileMap->Update(deltaTime);
     for (int y = 0; y < TileMapHeight; y++)
@@ -406,14 +408,6 @@ void LogicLoop(float deltaTime)
             tileMapArray[x][y]->Update(deltaTime);
         }
     }
-
-    for (EnemyClass* enemyObject : _EnemyObjectsContainer)
-    {
-        enemyObject->UpdateMovement(deltaTime, playerController->GetGameObject()->getPosition());
-        enemyObject->GetGameObject()->Update(deltaTime);
-    }
-
-    
 }
 
 void UpdateMainView(RenderWindow& mainWindow)
@@ -461,10 +455,7 @@ void RenderingLoop(RenderWindow& renderWindow, float deltaTime)
        }
    }
 
-   for (EnemyClass* enemyObject : _EnemyObjectsContainer)
-    {
-        renderWindow.draw(*enemyObject->GetGameObject());
-    }
+   enemyController->DrawEnemy(renderWindow);
 
     renderWindow.draw(*MouseCursor);
     renderWindow.draw(*playerController->GetGameObject());

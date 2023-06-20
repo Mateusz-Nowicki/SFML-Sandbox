@@ -146,6 +146,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EnemyClass.h" />
+    <ClInclude Include="EnemyController.h" />
     <ClInclude Include="GameMode.h" />
     <ClInclude Include="GameObject.h" />
     <ClInclude Include="PlayerActions.h" />

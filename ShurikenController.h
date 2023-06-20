@@ -8,10 +8,10 @@
 class ShurikenController
 {
 private:
-
-	vector<ShurikenObject*> _shurikensContainer;
+	
 	
 public:
+	vector<ShurikenObject*> _shurikensContainer;
 	ShurikenController()
 	{
 	}
@@ -24,7 +24,7 @@ public:
 		shurikenObject->GetGameObject()->setPosition(spawnPos);
 		cout << "DebugShurikenPos: Spawned at: " << spawnPos.x << "  " << spawnPos.y << endl;
 		_shurikensContainer.push_back(shurikenObject);
-		cout << _shurikensContainer.size() << endl;
+		cout << "Current shurikencontainer size: " << _shurikensContainer.size() << endl;
 	}
 
 
@@ -36,22 +36,8 @@ public:
 		}
 	}
 
+	//_shurikensContainer.erase(std::remove(_shurikensContainer.begin(), _shurikensContainer.end(), shurikenObject), _shurikensContainer.end());
 
-
-	void CheckCollisions(GameObject* GameObject, IntRect& intersection)
-	{
-		for (ShurikenObject* shurikenObject : _shurikensContainer)
-		{
-			if (GameObject->Collides(*shurikenObject->GetGameObject(), intersection))
-			{
-				_shurikensContainer.erase(std::remove(_shurikensContainer.begin(), _shurikensContainer.end(), shurikenObject), _shurikensContainer.end());
-				GameObject->move(GameObject->GetRandomWindowPos());
-				//shurikenObject->gameObject()->Dispose();
-				//shurikenObject = nullptr;
-				//delete shurikenObject;
-			}
-		}
-	}
 
 
 	void Update(float deltaTime)
@@ -60,5 +46,10 @@ public:
 		{
 			shurikenObject->Update(deltaTime);
 		}
+	}
+
+	vector<ShurikenObject*> GetContainer()
+	{
+		return _shurikensContainer;
 	}
 };

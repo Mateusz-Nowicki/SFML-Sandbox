@@ -40,13 +40,23 @@ public:
 		return directionVector;
 	}
 
-	void UpdateMovement(float deltaTime, Vector2f objectPos)
+	void Update(float deltaTime, Vector2f objectPos)
 	{
 		_directionVector = GetCalculatedDirection(_gameObject->getPosition(), objectPos);
 		Vector2f translation = (_directionVector * _baseSpeed * deltaTime);
 		Vector2f destination = _gameObject->getPosition() + translation;
 		_gameObject->move((_directionVector * _baseSpeed * deltaTime));
 	}
+
+	void Respawn()
+	{
+		int minX = 0, maxX = 640;
+		int minY = 0, maxY = 480;
+	
+		Vector2f Vector = this->GetGameObject()->GetRandomWindowPos();
+		this->GetGameObject()->move(Vector);
+	}
+
 
 	GameObject* GetGameObject()
 	{

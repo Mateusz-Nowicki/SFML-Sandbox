@@ -9,6 +9,7 @@ private:
 	float _baseSpeed = 100;
 	Vector2f _directionVector;
 	GameObject* _gameObject = nullptr;
+	
 
 	Vector2f normalize(const Vector2f& source)
 	{
@@ -24,6 +25,7 @@ private:
 	}
 
 public:
+	bool ToRemove = false;
 
 	ShurikenObject(Vector2f spawnPos, Vector2f destination)
 	{

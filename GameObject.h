@@ -92,6 +92,7 @@ public:
         _currentAnimationIndex = animationIndex;
         _currentAnimationFrame = 0;
     }
+
     bool Collides(GameObject& other, IntRect& intersection)
     {
         IntRect A = IntRect(this->getPosition().x, this->getPosition().y, this->_boundingBox->width, this->_boundingBox->height);

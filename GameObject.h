@@ -74,12 +74,6 @@ public:
     {
         UpdateAnimation(deltaTime);
     }
-    
-   //void Dispose()
-   //{
-   //    gameObject = nullptr;
-   //    delete gameObject;
-   //}
 
     Vector2f GetCenteredPosition()
     {

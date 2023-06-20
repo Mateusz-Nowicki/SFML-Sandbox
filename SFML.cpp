@@ -1,5 +1,3 @@
-// SFML.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
 
 
 #include <iostream>
@@ -257,8 +255,6 @@ void NonEditorModeInput(Event event)
 int main()
 {
     srand(time(NULL));
-
-    // TODO: Load settings from file (resolution, vsync, target fps, window position, window mode, etc.)
     RenderWindow mainWindow(VideoMode(WindowWidth, WindowHeight), "SFML-Sandbox");
 
     mainWindow.setFramerateLimit(144);
@@ -269,8 +265,6 @@ int main()
     while (mainWindow.isOpen())
     {
         deltaTime = Mainclock.restart();
-        //cout << "Delta time: " << deltaTime.asSeconds() << endl;
-        // Check all the window's events that were triggered since the last iteration of the loop
         Event event;
         while (mainWindow.pollEvent(event))
         {
@@ -370,18 +364,13 @@ int main()
 void Initialization()
 {
     windowQuarter = Vector2f(WindowWidth, WindowHeight) * 0.25f;
-    // load a 32x32 rectangle that starts at (10, 10)
-
     
     if (!algerFont.loadFromFile("Assets\\Fonts\\ALGER.TTF"));
     
     mainText.setFont(algerFont);
     mainText.setString("Mateusz");
     mainText.setCharacterSize(18);
-    //mainText.setStyle(sf::Text::Bold);
     mainText.setFillColor(sf::Color::Black);
-
-
 
     tileMapArray = new GameObject**[TileMapWidth];
     for (int x = 0; x < TileMapWidth; x++)
@@ -389,7 +378,6 @@ void Initialization()
         tileMapArray[x] = new GameObject*[TileMapHeight];
         for (int y = 0; y < TileMapHeight; y++)
         {
-           // tileMap->SetAnimation(6);
             tileMapArray[x][y] = new GameObject("Assets\\tile-map-1.png", 6, 8, 16, 16, new int[0] {}, true);
         }
     }
@@ -528,9 +516,6 @@ void Update(float deltaTime)
 }
 void LogicLoop(float deltaTime) 
 {
-    
-    
-   // tileMap->Update(deltaTime);
     for (int y = 0; y < TileMapHeight; y++)
     {
         for (int x = 0; x < TileMapWidth; x++)
@@ -567,11 +552,6 @@ void UpdateMainView(RenderWindow& mainWindow)
 
 void RenderingLoop(RenderWindow& renderWindow, float deltaTime)
 {
-    
-    
-    //renderWindow.draw(*tileMap);
-    
-
    for (int y = 0; y < TileMapHeight; y++)
    {
        for (int x = 0; x < TileMapWidth; x++)
@@ -598,7 +578,6 @@ void RenderingLoop(RenderWindow& renderWindow, float deltaTime)
 
     renderWindow.draw(line, 2, sf::Lines);
 #endif
- //6x10
     shurikenController->DrawShuriken(renderWindow);
     mainText.setPosition(playerController->GetGameObject()->GetCenteredPosition() - Vector2f(mainText.getGlobalBounds().width / 2, (mainText.getGlobalBounds().height / 2) + (24 + 16)));
     renderWindow.draw(mainText);

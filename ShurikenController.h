@@ -36,10 +36,6 @@ public:
 		}
 	}
 
-	//_shurikensContainer.erase(std::remove(_shurikensContainer.begin(), _shurikensContainer.end(), shurikenObject), _shurikensContainer.end());
-
-
-
 	void Update(float deltaTime)
 	{
 		for (ShurikenObject* shurikenObject : _shurikensContainer)

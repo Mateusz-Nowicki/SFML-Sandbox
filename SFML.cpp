@@ -2,24 +2,6 @@
 //
 
 
-
-
-/// Ogólna klasa: Character.
-// W tej klasie bêdzie: 
-// Chodzenie. 
-/*
-    character.Walk();
-
-    void Walk()
-    {
-        // Wykrycie inputu z klawiatury?
-        // Bêdzie trzeba przesun¹æ sprita. Easy - characterSprite.move(x, y);
-        // CharacterSpeed? FPSy nie powinny wp³ywaæ na prêdkoœæ ruchu postaci.
-        // Trzeba dodaæ Time.deltaTime.
-        // characterSprite.Draw();
-    }
-*/
-
 #include <iostream>
 #include <SFML/Graphics.hpp>
 #include "GameObject.h"
@@ -32,12 +14,13 @@
 #include <vector>
 #include "ShurikenController.h"
 #include "EnemyController.h"
+#include <sstream>
 using namespace sf;
 using namespace std;
 
 
 
-
+void UpdateMainView(RenderWindow& mainWindow);
 void PhysicsLoop(float);
 void Update(float);
 void LogicLoop(float deltaTime);
@@ -52,10 +35,11 @@ Clock Mainclock;
 Time deltaTime;
 
 GameObject* MouseCursor;
-//GameObject* tileMap;
 GameObject*** tileMapArray;
 
-int InitialEnemiesCount = 10;
+int InitialEnemiesCount = 15;
+float difficulty = 0.0f;
+float difficultyStep = 0.01f;
 
 int TileMapWidth = 40;
 int TileMapHeight = 30;
@@ -63,12 +47,17 @@ int WindowHeight = 480;
 int WindowWidth = 640;
 bool isProgramFocused = true;
 
-GameMode CurrentGameMode = GameMode::Editor;
+GameMode CurrentGameMode = GameMode::NonEditor;
 ShurikenController* shurikenController;
 EnemyController* enemyController;
 
 PlayerController* playerController;
 View mainView;
+Font algerFont;
+Text mainText;
+Text welcomeText;
+Text startText;
+Text currentHP;
 Vector2i mousePosI;
 Vector2f mousePosF;
 Vector2f windowQuarter;
@@ -77,8 +66,12 @@ int minTileIndex = 0;
 int maxTileIndex = 47;
 int currentTileIndex = 0;
 
+int score = 0;
+Text scoreText;
+
 int activeTileX, activeTileY;
 
+bool isGameRunning = false;
 
 
 int TileMapSet[30][40] =
@@ -115,7 +108,109 @@ int TileMapSet[30][40] =
    {13, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 14, 15},
 };
 
+bool Collide(GameObject* Mouse, RectangleShape& Button)
+{
+    IntRect intersection;
+    IntRect A = IntRect(Mouse->getPosition().x, Mouse->getPosition().y, Mouse->GetBoundingBox().width, Mouse->GetBoundingBox().height);
+    IntRect B = IntRect(Button.getPosition().x, Button.getPosition().y, Button.getGlobalBounds().width, Button.getGlobalBounds().height);
+    return A.intersects(B, intersection);
+}
 
+void MenuUI(RenderWindow& renderWindow, Event event)
+{
+    bool isStartButtonClicked = false;
+    IntRect intersection;
+
+    RectangleShape StartButton(Vector2f(128.0f, 32.0f));
+    StartButton.setFillColor(Color::Green);
+    StartButton.setPosition(mainView.getCenter() - Vector2f(StartButton.getGlobalBounds().width / 2, StartButton.getGlobalBounds().height / 2));
+    welcomeText.setFont(algerFont);
+    welcomeText.setString("Welcome");
+    welcomeText.setCharacterSize(25);
+    welcomeText.setFillColor(sf::Color::Red);
+    welcomeText.setPosition(mainView.getCenter() - Vector2f(welcomeText.getGlobalBounds().width / 2, (welcomeText.getGlobalBounds().height / 2) + 50));
+
+    startText.setFont(algerFont);
+    startText.setString("Start");
+    startText.setCharacterSize(25);
+    startText.setFillColor(sf::Color::Blue);
+    startText.setPosition(mainView.getCenter() - Vector2f(startText.getGlobalBounds().width / 2, (startText.getGlobalBounds().height / 2)));
+
+    
+    
+
+   renderWindow.draw(welcomeText);
+
+   if(!isStartButtonClicked)
+   {
+       if (Collide(MouseCursor, StartButton) && event.type == event.MouseButtonPressed)
+       {
+           if (event.mouseButton.button == sf::Mouse::Left)
+           {
+               CurrentGameMode = GameMode::NonEditor;
+               isStartButtonClicked = true;
+               isGameRunning = true;
+               StartButton.setSize(Vector2f(144.f, 48.f));
+               StartButton.setPosition(mainView.getCenter() - Vector2f(StartButton.getGlobalBounds().width / 2, StartButton.getGlobalBounds().height / 2));
+               
+           }
+       }
+   }
+   renderWindow.draw(StartButton);
+   renderWindow.draw(startText);
+}
+
+
+void SummaryScreenUI(RenderWindow& renderWindow, Event event)
+{
+    bool isStartButtonClicked = false;
+    IntRect intersection;
+
+    RectangleShape StartButton(Vector2f(128.0f, 32.0f));
+    StartButton.setFillColor(Color::Green);
+    StartButton.setPosition(mainView.getCenter() - Vector2f(StartButton.getGlobalBounds().width / 2, StartButton.getGlobalBounds().height / 2));
+    welcomeText.setFont(algerFont);
+    welcomeText.setString("U have died");
+    welcomeText.setCharacterSize(25);
+    welcomeText.setFillColor(sf::Color::Red);
+    welcomeText.setPosition(mainView.getCenter() - Vector2f(welcomeText.getGlobalBounds().width / 2, (welcomeText.getGlobalBounds().height / 2) + 100));
+
+    startText.setFont(algerFont);
+    startText.setString("Restart");
+    startText.setCharacterSize(25);
+    startText.setFillColor(sf::Color::Blue);
+    startText.setPosition(mainView.getCenter() - Vector2f(startText.getGlobalBounds().width / 2, (startText.getGlobalBounds().height / 2)));
+
+    scoreText.setFont(algerFont);
+    scoreText.setString("Your score is: " + std::to_string(score));
+    scoreText.setCharacterSize(25);
+    scoreText.setFillColor(sf::Color::Blue);
+    scoreText.setPosition(mainView.getCenter() - Vector2f((startText.getGlobalBounds().width / 2) + 50, (startText.getGlobalBounds().height / 2) + 50));
+
+    renderWindow.draw(scoreText);
+    renderWindow.draw(welcomeText);
+
+    if (!isStartButtonClicked)
+    {
+        if (Collide(MouseCursor, StartButton) && event.type == event.MouseButtonPressed)
+        {
+            if (event.mouseButton.button == sf::Mouse::Left)
+            {
+                CurrentGameMode = GameMode::NonEditor;
+                isStartButtonClicked = true;
+                isGameRunning = true;
+                StartButton.setSize(Vector2f(144.f, 48.f));
+                StartButton.setPosition(mainView.getCenter() - Vector2f(StartButton.getGlobalBounds().width / 2, StartButton.getGlobalBounds().height / 2));
+                playerController->HealthPoints = playerController->startingLifePoints;
+                score = 0;
+                difficulty = 0;
+                enemyController->DeadEnemies = 0;
+            }
+        }
+    }
+    renderWindow.draw(StartButton);
+    renderWindow.draw(startText);
+}
 
 void EditorModeInput(Event event)
 {
@@ -209,8 +304,7 @@ int main()
                         default:
                         {
                             break;
-                        }
-                           
+                        }    
                     }
                 }
             }
@@ -242,14 +336,34 @@ int main()
         mousePosF.x = mousePosI.x;
         mousePosF.y = mousePosI.y;
 
+
         MouseCursor->setPosition(mousePosF * 0.5f + mainView.getCenter() - windowQuarter);
-
-        PhysicsLoop(deltaTime.asSeconds());
-        Update(deltaTime.asSeconds());
-        LogicLoop(deltaTime.asSeconds());
-        RenderingLoop(mainWindow, deltaTime.asSeconds());
+        UpdateMainView(mainWindow);
+        mainWindow.clear(Color::Black);
+        if (isGameRunning)
+        {
+            PhysicsLoop(deltaTime.asSeconds());
+            Update(deltaTime.asSeconds());
+            LogicLoop(deltaTime.asSeconds());
+            RenderingLoop(mainWindow, deltaTime.asSeconds());
+        }
+        else
+        {
+            if (playerController->HealthPoints <= 0)
+            {
+                SummaryScreenUI(mainWindow, event);
+            }
+            else
+            {
+                CurrentGameMode = GameMode::Menu;
+                MenuUI(mainWindow, event);
+                
+            }
+        }
+        mainWindow.draw(*MouseCursor);
+        mainWindow.display();
     }
-
+    
     return 0;
 }
 
@@ -257,6 +371,17 @@ void Initialization()
 {
     windowQuarter = Vector2f(WindowWidth, WindowHeight) * 0.25f;
     // load a 32x32 rectangle that starts at (10, 10)
+
+    
+    if (!algerFont.loadFromFile("Assets\\Fonts\\ALGER.TTF"));
+    
+    mainText.setFont(algerFont);
+    mainText.setString("Mateusz");
+    mainText.setCharacterSize(18);
+    //mainText.setStyle(sf::Text::Bold);
+    mainText.setFillColor(sf::Color::Black);
+
+
 
     tileMapArray = new GameObject**[TileMapWidth];
     for (int x = 0; x < TileMapWidth; x++)
@@ -326,6 +451,9 @@ void PhysicsLoop(float deltaTime)
             {
                 shurikenObject->ToRemove = true;
                 enemyObject->Respawn();
+                score++;
+                difficulty += difficultyStep;
+                enemyController->DeadEnemies++;
             }
 
         }
@@ -339,7 +467,7 @@ void PhysicsLoop(float deltaTime)
     }
 
     shurikenController->_shurikensContainer.erase(std::remove_if(shurikenController->_shurikensContainer.begin(), shurikenController->_shurikensContainer.end(), [](ShurikenObject* shurikenObject) {return shurikenObject->ToRemove; }), shurikenController->_shurikensContainer.end());
-
+    enemyController->SpawnNewEnemies(difficulty, playerController->GetGameObject()->GetCenteredPosition());
 
 
 
@@ -364,6 +492,8 @@ void PhysicsLoop(float deltaTime)
 
     if (playerController->HealthPoints <= 0)
     {
+        isGameRunning = false;
+        CurrentGameMode = GameMode::Menu;
         cout << "deaded" << endl;
     }
 
@@ -437,8 +567,7 @@ void UpdateMainView(RenderWindow& mainWindow)
 
 void RenderingLoop(RenderWindow& renderWindow, float deltaTime)
 {
-    UpdateMainView(renderWindow);
-    renderWindow.clear(Color::Black);
+    
     
     //renderWindow.draw(*tileMap);
     
@@ -457,7 +586,7 @@ void RenderingLoop(RenderWindow& renderWindow, float deltaTime)
 
    enemyController->DrawEnemy(renderWindow);
 
-    renderWindow.draw(*MouseCursor);
+    
     renderWindow.draw(*playerController->GetGameObject());
 
 #ifdef DEBUG_DRAW   
@@ -471,14 +600,28 @@ void RenderingLoop(RenderWindow& renderWindow, float deltaTime)
 #endif
  //6x10
     shurikenController->DrawShuriken(renderWindow);
+    mainText.setPosition(playerController->GetGameObject()->GetCenteredPosition() - Vector2f(mainText.getGlobalBounds().width / 2, (mainText.getGlobalBounds().height / 2) + (24 + 16)));
+    renderWindow.draw(mainText);
 
-    renderWindow.display();
+    scoreText.setFont(algerFont);
+    scoreText.setCharacterSize(16);
+    scoreText.setFillColor(sf::Color::Black);
+
+    scoreText.setPosition(mainView.getCenter() - Vector2f(160, 105));
+    scoreText.setString("Current score: " + std::to_string(score));
+    renderWindow.draw(scoreText);
+
+
+
+    currentHP.setFont(algerFont);
+    currentHP.setCharacterSize(16);
+    currentHP.setFillColor(sf::Color::Black);
+    currentHP.setPosition(mainView.getCenter() - Vector2f(160, 120));
+    stringstream stringStream;
+    stringStream << (int)(playerController->HealthPoints * 100);
+    currentHP.setString("Current HP: " + stringStream.str());
+    renderWindow.draw(currentHP);
+    
 }
 
 
-
-
-
-// func load sprite atlas ma nie byæ global, co tam sie dzieje ma wyjsc do œrodka jako priv metoda klasy gameobjkect, 
-// construktor ma zostac zmieniony z przyjmowania spritearray, ma przyjmowaæ stepy, sizy oraz string path to spriteatlas, sprite ma wyjœæ z globala, i ma sobie za³adowaæ wszystko 
-// drugi objekt i jeden ma sie ruszac a drugi ma stac

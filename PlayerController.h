@@ -24,7 +24,8 @@ private:
 
 
 public:
-    float HealthPoints = 30.0;
+    const float startingLifePoints = 10;
+    float HealthPoints = 10.0;
 
 	PlayerController(GameObject* gameobject, map<PlayerActions, Keyboard::Key> mappedActions, float baseSpeed)
 	{

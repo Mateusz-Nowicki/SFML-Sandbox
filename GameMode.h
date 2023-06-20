@@ -2,6 +2,7 @@
 enum GameMode
 {
 	NonEditor = 0,
-	Editor
+	Editor,
+	Menu
 
 };

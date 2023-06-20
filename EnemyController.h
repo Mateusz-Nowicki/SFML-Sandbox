@@ -15,6 +15,7 @@ private:
 
 
 public:
+	int DeadEnemies = 0;
 
 	Vector2f GetRandomWindowPos()
 	{
@@ -37,7 +38,17 @@ public:
 		}
 	}
 
-
+	void SpawnNewEnemies(float difficulty, Vector2f destination)
+	{
+		for (int x = 0; x < DeadEnemies; x++)
+		{
+			for (int i = 0; i < (int)difficulty; i++)
+			{
+				SpawnEnemy(GetRandomWindowPos(), destination);
+			}
+		}
+		DeadEnemies = 0;
+	}
 
 	void SpawnEnemy(Vector2f spawnPos, Vector2f destination)
 	{
@@ -70,5 +81,10 @@ public:
 	vector<EnemyClass*> GetContainer()
 	{
 		return _EnemiesContainer;
+	}
+
+	int GetDeadEnemies()
+	{
+		return DeadEnemies;
 	}
 };
